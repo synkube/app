@@ -51,7 +51,7 @@ jobs:
           modified_files=($(echo "$MODIFIED_FILES" | tr " " "\n"))
 
           # List of golang directories
-          golang_dirs=($(ls golang | tr -d " "))
+          golang_dirs=($(ls ${{ env.GOLANG_LOCATION }} | tr -d " "))
 
           echo "Golang directories: ${golang_dirs[@]}"
 
@@ -60,7 +60,7 @@ jobs:
           include_all_dirs=false
 
           for file in "${modified_files[@]}"; do
-            if [[ $file =~ golang/core/.* ]]; then
+            if [[ $file =~ ${{ env.GOLANG_LOCATION }}/core/.* ]]; then
               include_all_dirs=true
               break
             fi
@@ -71,7 +71,7 @@ jobs:
           else
             for golang_dir in "${golang_dirs[@]}"; do
               for file in "${modified_files[@]}"; do
-                if [[ $file =~ golang/$golang_dir/.* ]]; then
+                if [[ $file =~ ${{ env.GOLANG_LOCATION }}/$golang_dir/.* ]]; then
                   changed_golang_dirs+=("$golang_dir")
                   break
                 fi
@@ -189,7 +189,7 @@ jobs:
         id: image_check
         run: |
           # will be 0 if none present
-          has_images=$(yq eval '.dockers != null' golang/${{matrix.golang-app}}/.goreleaser.yml)
+          has_images=$(yq eval '.dockers != null' ${{ env.GOLANG_LOCATION }}/${{matrix.golang-app}}/.goreleaser.yml)
           echo "##[set-output name=has_images;]$(echo $has_images)"
 
 
@@ -208,13 +208,13 @@ jobs:
       - name: Get Project Name
         id: project_id
         run: |
-          project_name=$(yq '.project_name' golang/${{matrix.golang-app}}/.goreleaser.yml)
+          project_name=$(yq '.project_name' ${{ env.GOLANG_LOCATION }}/${{matrix.golang-app}}/.goreleaser.yml)
           echo "##[set-output name=project_name;]$(echo $project_name)"
 
       - name: Push Docker Images (Snapshot)
         if: steps.branch-name.outputs.is_default != 'true' && steps.image_check.outputs.has_images == 'true'
         run: |
-          docker_image=$(yq '.dockers | length' golang/${{matrix.golang-app}}/dist/config.yaml)
+          docker_image=$(yq '.dockers | length' ${{ env.GOLANG_LOCATION }}/${{matrix.golang-app}}/dist/config.yaml)
           if [ $docker_image -eq "0" ]; then
             echo "No docker images to push"
             exit 0
