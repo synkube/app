@@ -11,7 +11,7 @@ func main() {
 	go func() {
 		for {
 			fmt.Println("Message printed every 5 seconds")
-			fmt.Println("Message printed every 5 seconds")
+			fmt.Println("Message printed every 10 seconds")
 			time.Sleep(5 * time.Second)
 		}
 	}()
