@@ -1,0 +1,111 @@
+name: Go CI
+
+on:
+  push:
+    tags:
+      - v*
+    branches:
+      - main
+    paths:
+      - 'golang/**'
+      - '.github/workflows/go.yml'
+  pull_request:
+    paths:
+      - 'golang/**'
+      - '.github/workflows/go.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  find-dirs:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Find modified directories
+        id: find-dirs
+        run: |
+          echo "Finding modified directories..."
+          MODIFIED_DIRS=$(git diff --name-only HEAD~1 HEAD | grep '^golang/' | cut -d'/' -f2 | sort | uniq)
+          if echo "${MODIFIED_DIRS}" | grep -q '^core$'; then
+            echo "Core package modified, building all apps..."
+            MODIFIED_DIRS=$(find golang -mindepth 1 -maxdepth 1 -type d | cut -d'/' -f2 | sort | uniq)
+          fi
+          echo "MODIFIED_DIRS=${MODIFIED_DIRS}"
+          echo "matrix=$(jq -nc --arg dirs "${MODIFIED_DIRS}" '{ "app-folder": ($dirs | split("\n") | map(select(. != ""))) }')" > matrix.json
+
+      - name: Set matrix
+        id: set-matrix
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const matrix = JSON.parse(fs.readFileSync('matrix.json', 'utf8'));
+            core.setOutput('matrix', matrix);
+
+  build-apps:
+    runs-on: ubuntu-latest
+    needs: find-dirs
+    strategy:
+      matrix: ${{ fromJson(needs.find-dirs.outputs.matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.21'
+
+      - name: Install dependencies
+        run: |
+          cd golang/${{ matrix.app-folder }}
+          go mod tidy
+          go mod download
+
+      - name: Cache Go build
+        id: cache-go-build
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/*.go') }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-${{ matrix.app-folder }}
+
+      - name: Run tests
+        run: |
+          cd golang/${{ matrix.app-folder }}
+          go test -v ./...
+
+      - name: Build
+        run: |
+          cd golang/${{ matrix.app-folder }}
+          go build -o app
+
+      - name: Run GoReleaser
+        run: |
+          cd golang/${{ matrix.app-folder }}
+          goreleaser release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          cd golang/${{ matrix.app-folder }}
+          docker build -t ghcr.io/${{ github.repository }}/${{ matrix.app-folder }}:${{ github.sha }} .
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: Push Docker image
+      #   run: docker push ghcr.io/${{ github.repository }}/${{ matrix.app-folder }}:${{ github.sha }}
