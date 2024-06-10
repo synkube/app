@@ -18,6 +18,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  GOLANG_LOCATION: golang
+  IMAGE_REPOSITORY: ghcr.io/synkube/gke
+
 jobs:
   file-changes:
     name: file-changes
@@ -84,7 +88,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        docker_dir: ${{ fromJSON(needs.file-changes.outputs.golang_dirs) }}
+        golang-app: ${{ fromJSON(needs.file-changes.outputs.golang_dirs) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -95,8 +99,8 @@ jobs:
           go-version: '1.21'
 
       - name: Install dependencies
+        working-directory: ${{ env.GOLANG_LOCATION }}/${{ matrix.golang-app }}
         run: |
-          cd golang/${{ matrix.app-folder }}
           go mod tidy
           go mod download
 
@@ -108,21 +112,21 @@ jobs:
             ~/.cache/go-build
           key: ${{ runner.os }}-go-build-${{ hashFiles('**/*.go') }}
           restore-keys: |
-            ${{ runner.os }}-go-build-${{ matrix.app-folder }}
+            ${{ runner.os }}-go-build-${{ matrix.golang-app }}
 
       - name: Run tests
+        working-directory: ${{ env.GOLANG_LOCATION }}/${{ matrix.golang-app }}
         run: |
-          cd golang/${{ matrix.app-folder }}
           go test -v ./...
 
       - name: Build
+        working-directory: ${{ env.GOLANG_LOCATION }}/${{ matrix.golang-app }}
         run: |
-          cd golang/${{ matrix.app-folder }}
           go build -o app
 
       - name: Run GoReleaser
+        working-directory: ${{ env.GOLANG_LOCATION }}/${{ matrix.golang-app }}
         run: |
-          cd golang/${{ matrix.app-folder }}
           goreleaser release
         env:
           GITHUB_OWNER: ${{ github.repository_owner }}
@@ -130,9 +134,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
+        working-directory: ${{ env.GOLANG_LOCATION }}/${{ matrix.golang-app }}
         run: |
-          cd golang/${{ matrix.app-folder }}
-          docker build -t ghcr.io/${{ github.repository }}/${{ matrix.app-folder }}:${{ github.sha }} .
+          docker build -t ghcr.io/${{ github.repository }}/${{ matrix.golang-app }}:${{ github.sha }} .
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -142,4 +146,4 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # - name: Push Docker image
-      #   run: docker push ghcr.io/${{ github.repository }}/${{ matrix.app-folder }}:${{ github.sha }}
+      #   run: docker push ghcr.io/${{ github.repository }}/${{ matrix.golang-app }}:${{ github.sha }}
