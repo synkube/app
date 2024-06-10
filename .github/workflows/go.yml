@@ -25,7 +25,7 @@ concurrency:
 
 env:
   GOLANG_LOCATION: golang
-  IMAGE_REPOSITORY: ghcr.io/synkube/gke
+  IMAGE_REPOSITORY: ghcr.io/synkube/app
 
 jobs:
   file-changes:
@@ -219,8 +219,6 @@ jobs:
             echo "No docker images to push"
             exit 0
           fi
-          docker push ghcr.io/$GITHUB_OWNER/$GITHUB_REPO/$image_name:${GITHUB_SHA}
+          docker push $IMAGE_REPOSITORY/$IMAGE_NAME:${GITHUB_SHA}
         env:
-          image_name: ${{ steps.project_id.outputs.project_name }}
-          GITHUB_OWNER: ${{ github.repository_owner }}
-          GITHUB_REPO: ${{ github.repository }}
+          IMAGE_NAME: ${{ steps.project_id.outputs.project_name }}
