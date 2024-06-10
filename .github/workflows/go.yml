@@ -214,7 +214,7 @@ jobs:
       - name: Push Docker Images (Snapshot)
         if: steps.branch-name.outputs.is_default != 'true' && steps.image_check.outputs.has_images == 'true'
         run: |
-          docker_image=$(yq '.dockers | length' dist/config.yaml)
+          docker_image=$(yq '.dockers | length' golang/${{matrix.golang-app}}/dist/config.yaml)
           if [ $docker_image -eq "0" ]; then
             echo "No docker images to push"
             exit 0
