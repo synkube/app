@@ -24,4 +24,4 @@ ARG APP_NAME=app1
 
 COPY --chown=nonroot:nonroot ${APP_NAME} /app/${APP_NAME}
 
-ENTRYPOINT ["/app/${APP_NAME}"]
+ENTRYPOINT ["/app/app1"]

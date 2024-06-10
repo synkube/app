@@ -19,40 +19,69 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  find-dirs:
+  file-changes:
+    name: file-changes
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      golang_dirs: ${{ steps.matrix.outputs.golang_dirs }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Get changed files
+        id: changes
+        uses: tj-actions/changed-files@v35
 
-      - name: Find modified directories
-        id: find-dirs
+      - name: Changed files matrix
+        id: matrix
+        env:
+          MODIFIED_FILES: ${{ steps.changes.outputs.all_modified_files }}
         run: |
-          echo "Finding modified directories..."
-          MODIFIED_DIRS=$(git diff --name-only HEAD~1 HEAD | grep '^golang/' | cut -d'/' -f2 | sort | uniq)
-          if echo "${MODIFIED_DIRS}" | grep -q '^core$'; then
-            echo "Core package modified, building all apps..."
-            MODIFIED_DIRS=$(find golang -mindepth 1 -maxdepth 1 -type d | cut -d'/' -f2 | sort | uniq)
+          # Enable debug mode
+          set -x
+
+          # Get the list of modified files
+          modified_files=($(echo "$MODIFIED_FILES" | tr " " "\n"))
+
+          # List of golang directories
+          golang_dirs=($(ls golang | tr -d " "))
+
+          echo "Golang directories: ${golang_dirs[@]}"
+
+          # Array to hold changed golang directories
+          changed_golang_dirs=()
+          include_all_dirs=false
+
+          for file in "${modified_files[@]}"; do
+            if [[ $file =~ golang/core/.* ]]; then
+              include_all_dirs=true
+              break
+            fi
+          done
+
+          if [ "$include_all_dirs" = true ]; then
+            changed_golang_dirs=("${golang_dirs[@]}")
+          else
+            for golang_dir in "${golang_dirs[@]}"; do
+              for file in "${modified_files[@]}"; do
+                if [[ $file =~ golang/$golang_dir/.* ]]; then
+                  changed_golang_dirs+=("$golang_dir")
+                  break
+                fi
+              done
+            done
           fi
-          echo "MODIFIED_DIRS=${MODIFIED_DIRS}"
-          echo "matrix=$(jq -nc --arg dirs "${MODIFIED_DIRS}" '{ "app-folder": ($dirs | split("\n") | map(select(. != ""))) }')" > matrix.json
 
-      - name: Set matrix
-        id: set-matrix
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const fs = require('fs');
-            const matrix = JSON.parse(fs.readFileSync('matrix.json', 'utf8'));
-            core.setOutput('matrix', matrix);
+          echo "Changed golang directories:"
+          printf "%s\n" "${changed_golang_dirs[@]}"
 
-  build-apps:
+          golang_output=$(jq -nc '[$ARGS.positional[]]' --args "${changed_golang_dirs[@]}")
+
+          echo "golang_dirs=$golang_output" >> $GITHUB_OUTPUT
+
+  go-build:
     runs-on: ubuntu-latest
-    needs: find-dirs
+    needs: [file-changes]
     strategy:
-      matrix: ${{ fromJson(needs.find-dirs.outputs.matrix) }}
+      matrix: ${{ needs.file-changes.outputs.golang_dirs }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -93,6 +122,8 @@ jobs:
           cd golang/${{ matrix.app-folder }}
           goreleaser release
         env:
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image

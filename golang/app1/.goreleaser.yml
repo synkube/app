@@ -54,6 +54,7 @@ archives:
 dockers:
   - image_templates:
       - "{{ .Env.IMAGE_REPOSITORY }}/{{ .ProjectName }}:latest"
+      - "{{ .Env.IMAGE_REPOSITORY }}/{{ .ProjectName }}:{{ .FullCommit }}"
       - "{{ .Env.IMAGE_REPOSITORY }}/{{ .ProjectName }}:{{ .Tag }}"
     dockerfile: Dockerfile
     goos: linux
@@ -69,8 +70,6 @@ dockers:
       - --label=org.opencontainers.image.revision={{ .FullCommit }}
       - --label=org.opencontainers.image.licenses=MIT
       - --platform=linux/amd64
-    ids:
-      - "{{ .ProjectName }}"
 
 # track sizes
 report_sizes: true
