@@ -219,6 +219,7 @@ jobs:
             echo "No docker images to push"
             exit 0
           fi
+          docker tag $IMAGE_REPOSITORY/$IMAGE_NAME:latest $IMAGE_REPOSITORY/$IMAGE_NAME:v$VERSION
           docker push $IMAGE_REPOSITORY/$IMAGE_NAME:v$VERSION
           docker push $IMAGE_REPOSITORY/$IMAGE_NAME:latest
         env:
