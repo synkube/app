@@ -173,7 +173,6 @@ jobs:
 
 
       - name: Check For Docker Images
-        if: steps.branch-name.outputs.is_default != 'true'
         id: image_check
         run: |
           # will be 0 if none present
