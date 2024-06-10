@@ -208,7 +208,7 @@ jobs:
       - name: Get Project Name
         id: project_id
         run: |
-          project_name=$(yq '.project_name' ${{matrix.golang-app}}/.goreleaser.yml)
+          project_name=$(yq '.project_name' golang/${{matrix.golang-app}}/.goreleaser.yml)
           echo "##[set-output name=project_name;]$(echo $project_name)"
 
       - name: Push Docker Images (Snapshot)
