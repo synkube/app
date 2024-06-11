@@ -60,12 +60,18 @@ jobs:
           done
 
           if [ "$include_all_dirs" = true ]; then
-            changed_dirs=("${dirs[@]}")
+            for dir in "${dirs[@]}"; do
+              if [ "$dir" != "core" ]; then
+                changed_dirs+=("$dir")
+              fi
+            done
           else
             for dir in "${dirs[@]}"; do
               for file in "${modified_files[@]}"; do
                 if [[ $file =~ ${{ env.FOLDER_LOCATION }}/$dir/.* ]]; then
-                  changed_dirs+=("$dir")
+                  if [ "$dir" != "core" ]; then
+                    changed_dirs+=("$dir")
+                  fi
                   break
                 fi
               done
@@ -108,7 +114,7 @@ jobs:
 
       - name: Cache Go build
         id: cache-go-build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
@@ -155,7 +161,7 @@ jobs:
 
       - name: Cache Go build
         id: cache-go-build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build

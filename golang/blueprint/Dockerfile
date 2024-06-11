@@ -19,11 +19,9 @@ LABEL org.label-schema.vcs-url="${VCS_URL}"
 LABEL org.opencontainers.image.source="${VCS_URL}"
 LABEL org.opencontainers.image.description="${DESCRIPTION}"
 
-USER nonroot:nonroot
-
 WORKDIR /app
 
-COPY --chown=nonroot:nonroot ${APP_NAME} /app/${APP_NAME}
+COPY ${APP_NAME} /app/${APP_NAME}
 
 # Run the Go application
-ENTRYPOINT ["./app/${APP_NAME}"]
+CMD ["/app/blueprint"]

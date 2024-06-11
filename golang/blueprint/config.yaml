@@ -1,0 +1,25 @@
+app_name: "Blueprint Golang Application"
+port: 8080
+version: "1.0.0"
+database:
+  host: "localhost"
+  port: 5432
+  username: "admin"
+  password: "password"
+features:
+  - name: "Feature1"
+    enabled: true
+  - name: "Feature2"
+    enabled: false
+nested_object:
+  level1:
+    level2:
+      key: "value"
+array_of_strings:
+  - "value1"
+  - "value2"
+array_of_objects:
+  - id: 1
+    name: "Object1"
+  - id: 2
+    name: "Object2"
