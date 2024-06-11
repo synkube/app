@@ -1,4 +1,4 @@
-name: Go CI
+name: golang
 
 permissions:
   contents: write
@@ -24,7 +24,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GOLANG_LOCATION: golang
+  FOLDER_LOCATION: golang
   IMAGE_REPOSITORY: ghcr.io/synkube/app
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
     name: file-changes
     runs-on: ubuntu-latest
     outputs:
-      golang_dirs: ${{ steps.matrix.outputs.golang_dirs }}
+      dirs: ${{ steps.matrix.outputs.dirs }}
     steps:
       - uses: actions/checkout@v4
       - name: Get changed files
@@ -44,56 +44,47 @@ jobs:
         env:
           MODIFIED_FILES: ${{ steps.changes.outputs.all_modified_files }}
         run: |
-          # Enable debug mode
           set -x
-
-          # Get the list of modified files
           modified_files=($(echo "$MODIFIED_FILES" | tr " " "\n"))
-
-          # List of golang directories
-          golang_dirs=($(ls ${{ env.GOLANG_LOCATION }} | tr -d " "))
-
-          echo "Golang directories: ${golang_dirs[@]}"
-
-          # Array to hold changed golang directories
-          changed_golang_dirs=()
+          dirs=($(ls ${{ env.FOLDER_LOCATION }} | tr -d " "))
+          echo "Directories: ${dirs[@]}"
+          changed_dirs=()
           include_all_dirs=false
 
+          # Check if core directory is modified, because it contains shared code
           for file in "${modified_files[@]}"; do
-            if [[ $file =~ ${{ env.GOLANG_LOCATION }}/core/.* ]]; then
+            if [[ $file =~ ${{ env.FOLDER_LOCATION }}/core/.* ]]; then
               include_all_dirs=true
               break
             fi
           done
 
           if [ "$include_all_dirs" = true ]; then
-            changed_golang_dirs=("${golang_dirs[@]}")
+            changed_dirs=("${dirs[@]}")
           else
-            for golang_dir in "${golang_dirs[@]}"; do
+            for dir in "${dirs[@]}"; do
               for file in "${modified_files[@]}"; do
-                if [[ $file =~ ${{ env.GOLANG_LOCATION }}/$golang_dir/.* ]]; then
-                  changed_golang_dirs+=("$golang_dir")
+                if [[ $file =~ ${{ env.FOLDER_LOCATION }}/$dir/.* ]]; then
+                  changed_dirs+=("$dir")
                   break
                 fi
               done
             done
           fi
 
-          echo "Changed golang directories:"
-          printf "%s\n" "${changed_golang_dirs[@]}"
-
-          golang_output=$(jq -nc '[$ARGS.positional[]]' --args "${changed_golang_dirs[@]}")
-
-          echo "golang_dirs=$golang_output" >> $GITHUB_OUTPUT
+          echo "Changed directories:"
+          printf "%s\n" "${changed_dirs[@]}"
+          dirs_output=$(jq -nc '[$ARGS.positional[]]' --args "${changed_dirs[@]}")
+          echo "dirs=$dirs_output" >> $GITHUB_OUTPUT
 
   go-build:
     runs-on: ubuntu-latest
     needs: [file-changes]
-    if: ${{ needs.file-changes.outputs.golang_dirs != '[]' }}
+    if: ${{ needs.file-changes.outputs.dirs != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        golang-app: ${{ fromJSON(needs.file-changes.outputs.golang_dirs) }}
+        project: ${{ fromJSON(needs.file-changes.outputs.dirs) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -106,39 +97,13 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v6
 
-    
-      - name: Bump version and push tag
-        id: tag_version
-        if: steps.branch-name.outputs.is_default == 'true'
-        uses: mathieudutour/github-tag-action@v6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag_prefix: ${{matrix.golang-app}}/v
-          release_branches: main
-          fetch_all_tags: true
-        
-      - name: Fetch all tags
-        run: git fetch --force --tags
-
-      # get the tag we just created
-      - name: Git Fetch Unshallow
-        run: git fetch
-
-
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      
       - name: Install dependencies
-        working-directory: ${{ env.GOLANG_LOCATION }}/${{ matrix.golang-app }}
+        working-directory: ${{ env.FOLDER_LOCATION }}/${{ matrix.project }}
         run: |
           go mod tidy
           go mod download
@@ -151,58 +116,113 @@ jobs:
             ~/.cache/go-build
           key: ${{ runner.os }}-go-build-${{ hashFiles('**/*.go') }}
           restore-keys: |
-            ${{ runner.os }}-go-build-${{ matrix.golang-app }}
+            ${{ runner.os }}-go-build-${{ matrix.project }}
 
-      # - name: Run tests
-      #   working-directory: ${{ env.GOLANG_LOCATION }}/${{ matrix.golang-app }}
-      #   run: |
-      #     go test -v ./...
+      - name: Run tests
+        working-directory: ${{ env.FOLDER_LOCATION }}/${{ matrix.project }}
+        run: |
+          go test -v ./...
 
-      # - name: Build
-      #   working-directory: ${{ env.GOLANG_LOCATION }}/${{ matrix.golang-app }}
-      #   run: |
-      #     go build -o app
+      - name: Run tests with coverage
+        working-directory: ${{ env.FOLDER_LOCATION }}/${{ matrix.project }}
+        run: |
+          go test -coverprofile=coverage.out ./...
+          go tool cover -html=coverage.out -o coverage.html
 
-      # - name: Build Docker image
-      #   working-directory: ${{ env.GOLANG_LOCATION }}/${{ matrix.golang-app }}
-      #   run: |
-      #     docker build -t ghcr.io/${{ github.repository }}/${{ matrix.golang-app }}:${{ github.sha }} .
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: ${{ env.FOLDER_LOCATION }}/${{ matrix.project }}/coverage.html
 
-      # - name: Push Docker image
-      #   run: docker push ghcr.io/${{ github.repository }}/${{ matrix.golang-app }}:${{ github.sha }}
+  goreleaser:
+    runs-on: ubuntu-latest
+    needs: [file-changes, go-build]
+    if: ${{ needs.file-changes.outputs.dirs != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON(needs.file-changes.outputs.dirs) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
+      - uses: mikefarah/yq@v4.32.2
+
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v6
+
+      - name: Cache Go build
+        id: cache-go-build
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/*.go') }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-${{ matrix.project }}
+
+      - name: Bump version and push tag
+        id: tag_version
+        if: steps.branch-name.outputs.is_default == 'true'
+        uses: mathieudutour/github-tag-action@v6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag_prefix: ${{matrix.project}}/v
+          release_branches: main
+          fetch_all_tags: true
+
+      # - name: Fetch all tags
+      #   run: git fetch --force --tags
+
+      # - name: Git Fetch Unshallow
+      #   run: git fetch
+
+      - name: Git get latest tag with prefix
+        id: latest-tag
+        run: |
+          latest_tag=$(git describe --tags --match="${{matrix.project}}/v[0-9]*")
+          echo "latest_tag=$latest_tag" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check For Docker Images
         id: image_check
         run: |
-          # will be 0 if none present
-          has_images=$(yq eval '.dockers != null' ${{ env.GOLANG_LOCATION }}/${{matrix.golang-app}}/.goreleaser.yml)
-          echo "##[set-output name=has_images;]$(echo $has_images)"
-
+          has_images=$(yq eval '.dockers != null' ${{ env.FOLDER_LOCATION }}/${{matrix.project}}/.goreleaser.yml)
+          echo "has_images=$has_images" >> $GITHUB_OUTPUT
 
       - name: Run GoReleaser (Snapshot)
         uses: goreleaser/goreleaser-action@v6
         if: steps.image_check.outputs.has_images == 'true'
         with:
-          args: --snapshot --clean
+          args: --clean --snapshot
           version: '~> v2'
-          workdir: ${{ env.GOLANG_LOCATION }}/${{ matrix.golang-app }}
+          workdir: ${{ env.FOLDER_LOCATION }}/${{ matrix.project }}
         env:
           GITHUB_OWNER: ${{ github.repository_owner }}
           GITHUB_REPO: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GORELEASER_CURRENT_TAG: ${{ steps.tag_version.outputs.new_version }}
+          GORELEASER_CURRENT_TAG: ${{ steps.latest-tag.outputs.latest_tag }}
 
       - name: Get Project Name
         id: project_id
         run: |
-          project_name=$(yq '.project_name' ${{ env.GOLANG_LOCATION }}/${{matrix.golang-app}}/.goreleaser.yml)
-          echo "##[set-output name=project_name;]$(echo $project_name)"
+          project_name=$(yq '.project_name' ${{ env.FOLDER_LOCATION }}/${{matrix.project}}/.goreleaser.yml)
+          echo "project_name=$project_name" >> $GITHUB_OUTPUT
 
       - name: Push Docker Images (Snapshot)
         if: steps.branch-name.outputs.is_default != 'true' && steps.image_check.outputs.has_images == 'true'
         run: |
-          docker_image=$(yq '.dockers | length' ${{ env.GOLANG_LOCATION }}/${{matrix.golang-app}}/dist/config.yaml)
+          docker_image=$(yq '.dockers | length' ${{ env.FOLDER_LOCATION }}/${{matrix.project}}/dist/config.yaml)
           if [ $docker_image -eq "0" ]; then
             echo "No docker images to push"
             exit 0
@@ -214,12 +234,13 @@ jobs:
       - name: Push Docker Images (Tag/Latest)
         if: steps.branch-name.outputs.is_default == 'true' && steps.image_check.outputs.has_images == 'true'
         run: |
-          docker_image=$(yq '.dockers | length' ${{ env.GOLANG_LOCATION }}/${{matrix.golang-app}}/dist/config.yaml)
+          docker_image=$(yq '.dockers | length' ${{ env.FOLDER_LOCATION }}/${{matrix.project}}/dist/config.yaml)
           if [ $docker_image -eq "0" ]; then
             echo "No docker images to push"
             exit 0
           fi
-          docker tag $IMAGE_REPOSITORY/$IMAGE_NAME:latest $IMAGE_REPOSITORY/$IMAGE_NAME:v$VERSION
+          # docker tag $IMAGE_REPOSITORY/$IMAGE_NAME:latest $IMAGE_REPOSITORY/$IMAGE_NAME:v$VERSION
+          docker push $IMAGE_REPOSITORY/$IMAGE_NAME:${GITHUB_SHA}
           docker push $IMAGE_REPOSITORY/$IMAGE_NAME:v$VERSION
           docker push $IMAGE_REPOSITORY/$IMAGE_NAME:latest
         env:

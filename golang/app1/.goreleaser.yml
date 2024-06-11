@@ -2,13 +2,6 @@ version: 2
 
 project_name: "app1"
 
-# release:
-#   github:
-#     owner: "{{ .Env.GITHUB_OWNER }}"
-#     name: "{{ .Env.GITHUB_REPO }}"
-#   draft: false
-#   prerelease: auto
-
 before:
   hooks:
     - go mod tidy
@@ -25,7 +18,7 @@ builds:
       - GOPROXY=https://proxy.golang.org
     goos:
       - linux
-      - darwin
+      # - darwin
     goarch:
       - amd64
     ldflags:
@@ -38,7 +31,7 @@ source:
   enabled: true
 
 checksum:
-  name_template: "{{ .ProjectName }}_SHA256SUMS"
+  name_template: "checksums.txt"
   algorithm: sha256
 
 archives:
