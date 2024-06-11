@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Set the application name
-ARG APP_NAME=app1
+ARG APP_NAME=blueprint
 
 # Build the Go application
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-s -w -extldflags "-static"' -o ${APP_NAME}
@@ -47,7 +47,9 @@ LABEL org.opencontainers.image.source="${VCS_URL}"
 LABEL org.opencontainers.image.description="A simple Go web server that prints a message every 5 seconds."
 
 # Copy the binary from the build stage to the final container
-ARG APP_NAME=app1
+ARG APP_NAME=blueprint
+
+ENV APP_NAME=${APP_NAME}
 COPY --from=build /app/${APP_NAME} .
 
 # Run the Go application

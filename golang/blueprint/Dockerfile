@@ -4,10 +4,12 @@ FROM --platform=linux/amd64 alpine:3.20
 ENV IMAGE_REPO="ghcr.io/synkube/app"
 ENV OWNER="synkube"
 ENV VCS_URL="https://github.com/synkube/app"
-ENV DESCRIPTION="A simple Go web server that prints a message every 5 seconds."
+ENV DESCRIPTION="A simple Go web server."
 
 # Custom to this application
-ARG APP_NAME=app1
+ARG APP_NAME=blueprint
+
+ENV APP_NAME=${APP_NAME}
 
 # Add labels
 LABEL org.label-schema.description="${DESCRIPTION}"
@@ -23,4 +25,5 @@ WORKDIR /app
 
 COPY --chown=nonroot:nonroot ${APP_NAME} /app/${APP_NAME}
 
-ENTRYPOINT ["/app/app1"]
+# Run the Go application
+ENTRYPOINT ["./app/${APP_NAME}"]

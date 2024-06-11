@@ -1,6 +1,6 @@
 version: 2
 
-project_name: "app1"
+project_name: "blueprint"
 
 before:
   hooks:
@@ -63,6 +63,7 @@ dockers:
       - --label=org.opencontainers.image.revision={{ .FullCommit }}
       - --label=org.opencontainers.image.licenses=MIT
       - --platform=linux/amd64
+      - --build-arg=APP_NAME={{ .ProjectName }}
 
 # track sizes
 report_sizes: true
