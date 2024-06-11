@@ -173,11 +173,11 @@ jobs:
           release_branches: main
           fetch_all_tags: true
 
-      # - name: Fetch all tags
-      #   run: git fetch --force --tags
+      - name: Fetch all tags
+        run: git fetch --force --tags
 
-      # - name: Git Fetch Unshallow
-      #   run: git fetch
+      - name: Git Fetch Unshallow
+        run: git fetch
 
       - name: Git get latest tag with prefix
         id: latest-tag
