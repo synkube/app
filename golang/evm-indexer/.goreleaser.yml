@@ -1,0 +1,70 @@
+version: 2
+
+project_name: "evm-indexer"
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+    - go mod download
+
+builds:
+  - id: "build"
+    binary: "{{ .ProjectName }}"
+    dir: .
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+      - GOPROXY=https://proxy.golang.org
+      - GOPRIVATE=github.com/synkube/app
+    goos:
+      - linux
+      # - darwin
+    goarch:
+      - amd64
+    ldflags:
+      - '-s -w -extldflags "-static"'
+    flags:
+      - "-a"
+    main: ./
+
+source:
+  enabled: true
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    wrap_in_directory: true
+    files:
+      - README.md
+
+dockers:
+  - image_templates:
+      - "{{ .Env.IMAGE_REPOSITORY }}/{{ .ProjectName }}:latest"
+      - "{{ .Env.IMAGE_REPOSITORY }}/{{ .ProjectName }}:{{ .FullCommit }}"
+      - "{{ .Env.IMAGE_REPOSITORY }}/{{ .ProjectName }}:{{ .Tag }}"
+    dockerfile: Dockerfile
+    goos: linux
+    goarch: amd64
+    build_flag_templates:
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.name={{ .ProjectName }}
+      - --label=org.opencontainers.image.description={{ .ProjectName }}
+      - --label=org.opencontainers.image.url=https://github.com/{{ .Env.GITHUB_REPO }}
+      - --label=org.opencontainers.image.source=https://github.com/{{ .Env.GITHUB_REPO }}
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{ .Date }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=MIT
+      - --platform=linux/amd64
+      - --build-arg=APP_NAME={{ .ProjectName }}
+
+# track sizes
+report_sizes: true

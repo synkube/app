@@ -1,0 +1,13 @@
+appName: "evm-indexer"
+version: "1.0.0"
+serverConfig:
+  - type: http
+    port: 8080
+dbConfig:
+  type: postgres
+  postgres:
+    host: localhost
+    port: 5432
+    username: postgres
+    password: mypassword
+    dbname: index_ethereum

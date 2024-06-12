@@ -1,0 +1,9 @@
+appName: "evm-indexer"
+version: "1.0.0"
+serverConfig:
+  - type: http
+    port: 8080
+dbConfig:
+  type: sqlite
+  sqlite:
+    file: ./sqlite.db
