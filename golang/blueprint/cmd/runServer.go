@@ -36,6 +36,6 @@ func startHTTPServer(cfg data.ServerConfig) {
 	})
 	http.Handle("/metrics", promhttp.Handler())
 
-	fmt.Printf("HTTP server is running on %s...\n", addr)
+	log.Printf("HTTP server is running on %s...\n", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }

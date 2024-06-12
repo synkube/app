@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -33,9 +32,9 @@ func Start(args []string, buildInfo string) error {
 				Name:  "info",
 				Usage: "Information about how to use this application",
 				Action: func(c *cli.Context) error {
-					fmt.Println("Usage info for this application:")
-					fmt.Println("- Use the '--config' flag to specify a configuration file.")
-					fmt.Println("- Use the 'info' command to get information about usage.")
+					log.Println("Usage info for this application:")
+					log.Println("- Use the '--config' flag to specify a configuration file.")
+					log.Println("- Use the 'info' command to get information about usage.")
 					return nil
 				},
 			},
@@ -55,20 +54,20 @@ func runApplication(c *cli.Context) error {
 	if err := initConfig(c.String("config")); err != nil {
 		return err
 	}
-	fmt.Println("Running the application with arguments:", c.Args().Slice())
-	common.PrettyPrintYAML(cfg)
-	data.InitializeDB(cfg.DbConfig)
+	log.Println("Running the application with arguments:", c.Args().Slice())
 
+	ds := data.InitializeDB(cfg.DbConfig)
+	ds.CheckConnection()
 	StartServers(cfg.ServerConfig)
 	return nil
 }
 
 func initConfig(cfgFile string) error {
 	if cfgFile != "" {
-		fmt.Printf("Loading config file from: %s\n", cfgFile)
+		log.Printf("Loading config file from: %s\n", cfgFile)
 		viper.SetConfigFile(cfgFile)
 	} else {
-		fmt.Println("Loading default config file")
+		log.Println("Loading default config file")
 		viper.AddConfigPath(".")
 		viper.SetConfigName("config")
 	}
@@ -79,12 +78,13 @@ func initConfig(cfgFile string) error {
 		return err
 	}
 
-	fmt.Println("Using config file:", viper.ConfigFileUsed())
+	log.Println("Using config file:", viper.ConfigFileUsed())
 
 	if err := viper.Unmarshal(&cfg); err != nil {
 		log.Printf("Unable to decode into struct: %s", err)
 		return err
 	}
+	common.PrettyPrintYAML(cfg)
 
 	return nil
 }
