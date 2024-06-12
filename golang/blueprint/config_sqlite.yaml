@@ -1,4 +1,4 @@
-app2_name: "MyApp"
+appName: "MyApp"
 version: "1.0"
 serverConfig:
   - type: http
