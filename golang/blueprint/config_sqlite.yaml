@@ -1,0 +1,11 @@
+app2_name: "MyApp"
+version: "1.0"
+serverConfig:
+  - type: http
+    port: 8080
+  - type: grpc
+    port: 9090
+dbConfig:
+  type: sqlite
+  sqlite:
+    file: ./sqlite.db

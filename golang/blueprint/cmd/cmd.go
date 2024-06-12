@@ -7,13 +7,13 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/synkube/app/core/common"
+	"github.com/synkube/app/core/data"
 	"github.com/urfave/cli/v2"
-	"gopkg.in/yaml.v2"
 )
 
 var cfg Config
 
-func RunApp() error {
+func Start(args []string, buildInfo string) error {
 	app := &cli.App{
 		Name:  "app",
 		Usage: "A blueprint Golang application",
@@ -56,15 +56,19 @@ func runApplication(c *cli.Context) error {
 		return err
 	}
 	fmt.Println("Running the application with arguments:", c.Args().Slice())
-	printConfig()
-	runServer()
+	common.PrettyPrintYAML(cfg)
+	data.InitializeDB(cfg.DbConfig)
+
+	StartServers(cfg.ServerConfig)
 	return nil
 }
 
 func initConfig(cfgFile string) error {
 	if cfgFile != "" {
+		fmt.Printf("Loading config file from: %s\n", cfgFile)
 		viper.SetConfigFile(cfgFile)
 	} else {
+		fmt.Println("Loading default config file")
 		viper.AddConfigPath(".")
 		viper.SetConfigName("config")
 	}
@@ -83,14 +87,4 @@ func initConfig(cfgFile string) error {
 	}
 
 	return nil
-}
-
-func printConfig() {
-	cfgYAML, err := yaml.Marshal(&cfg)
-	if err != nil {
-		log.Printf("Error pretty-printing config: %s", err)
-		return
-	}
-	indentedYAML := common.AddIndent(string(cfgYAML), "  ")
-	fmt.Printf("Config:\n%s\n", indentedYAML)
 }
