@@ -11,8 +11,13 @@ import (
 
 var Logger *slog.Logger
 
+var (
+	version = common.DefaultVersion
+	date    = common.DefaultDate
+)
+
 func main() {
-	buildInfo := common.BuildInfo()
+	buildInfo := common.NewBuildInfo(version, "blueprint", date)
 	Logger = cmd.InitLogging()
 
 	err := cmd.Start(os.Args, buildInfo)

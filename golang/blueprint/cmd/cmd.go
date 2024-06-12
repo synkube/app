@@ -6,6 +6,7 @@ import (
 
 	"github.com/synkube/app/blueprint/config"
 	"github.com/synkube/app/blueprint/data"
+	"github.com/synkube/app/core/common"
 	coreData "github.com/synkube/app/core/data"
 	"github.com/urfave/cli/v2"
 )
@@ -13,10 +14,11 @@ import (
 var cfg config.Config
 var ds *coreData.DataStore
 
-func Start(args []string, buildInfo string) error {
+func Start(args []string, buildInfo common.BuildInfo) error {
 	app := &cli.App{
-		Name:  "app",
-		Usage: "A blueprint Golang application",
+		Name:    buildInfo.Name(),
+		Version: buildInfo.Version(),
+		Usage:   buildInfo.Description(),
 		Action: func(c *cli.Context) error {
 			// Default action if no subcommand is provided
 			return runApplication(c)

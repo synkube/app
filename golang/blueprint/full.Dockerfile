@@ -26,31 +26,25 @@ FROM --platform=linux/amd64 alpine:3.20
 # Set the working directory inside the container
 WORKDIR /app
 
-COPY version.txt .
-
 # Set hardcoded environment variables
 ENV GHCR_REPO="ghcr.io/synkube/app"
 ENV OWNER="synkube"
 ENV VCS_URL="https://github.com/synkube/app"
 
-# Read the version from version.txt and set it as an environment variable
-RUN VERSION=$(cat version.txt) && \
-  echo $VERSION > /version.txt
-
-# Add labels
-LABEL maintainer="Borislav Grigorov <b.s.grigorov@gmail.com>"
-LABEL org.label-schema.description="A simple Go web server that prints a message every 5 seconds."
-LABEL org.label-schema.name="${GHCR_REPO}/${APP_NAME}"
-LABEL org.label-schema.schema-version="${VERSION}"
-LABEL org.label-schema.vcs-url="${VCS_URL}"
-LABEL org.opencontainers.image.source="${VCS_URL}"
-LABEL org.opencontainers.image.description="A simple Go web server that prints a message every 5 seconds."
-
 # Copy the binary from the build stage to the final container
 ARG APP_NAME=blueprint
-
 ENV APP_NAME=${APP_NAME}
+
+# Add labels
+LABEL org.label-schema.description="${DESCRIPTION}"
+LABEL org.label-schema.name="${IMAGE_REPO}/${APP_NAME}"
+LABEL org.label-schema.schema-version="1.0.0"
+LABEL org.label-schema.vcs-url="${VCS_URL}"
+LABEL org.opencontainers.image.source="${VCS_URL}"
+LABEL org.opencontainers.image.description="${DESCRIPTION}"
+
+
 COPY --from=build /app/${APP_NAME} .
 
 # Run the Go application
-CMD ["./${APP_NAME}"]
+CMD ["/app/blueprint"]

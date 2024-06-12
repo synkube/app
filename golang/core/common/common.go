@@ -10,10 +10,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func BuildInfo() string {
-	return "Build info: Version 1.0.0"
-}
-
 func AddIndent(input, indent string) string {
 	lines := strings.Split(input, "\n")
 	for i, line := range lines {

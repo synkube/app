@@ -27,6 +27,7 @@ gin-bin
 *.dll
 *.so
 *.dylib
+**sqlite.db
 
 # Test binary, build with `go test -c`
 *.test

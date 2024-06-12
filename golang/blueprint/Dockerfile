@@ -8,7 +8,6 @@ ENV DESCRIPTION="A simple Go web server."
 
 # Custom to this application
 ARG APP_NAME=blueprint
-
 ENV APP_NAME=${APP_NAME}
 
 # Add labels
