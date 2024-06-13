@@ -1,0 +1,15 @@
+appName: "evm-indexer"
+version: "1.0"
+serverConfig:
+  - type: http
+    port: 8080
+  - type: grpc
+    port: 9090
+dbConfig:
+  type: clickhouse
+  clickhouse:
+    host: localhost
+    port: 9000
+    username: default
+    password: 
+    dbname: default

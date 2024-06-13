@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"gorm.io/driver/clickhouse"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -50,6 +51,10 @@ func InitializeDB(cfg DbConfig) *DataStore {
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 			cfg.MySQL.Username, cfg.MySQL.Password, cfg.MySQL.Host, cfg.MySQL.Port, cfg.MySQL.DBName)
 		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	case "clickhouse":
+		dsn := fmt.Sprintf("tcp://%s:%s@%s:%d/%s",
+			cfg.ClickHouse.Username, cfg.ClickHouse.Password, cfg.ClickHouse.Host, cfg.ClickHouse.Port, cfg.ClickHouse.DBName)
+		db, err = gorm.Open(clickhouse.Open(dsn), &gorm.Config{})
 	default:
 		log.Fatalf("Unsupported DB type: %s", cfg.Type)
 	}

@@ -6,10 +6,11 @@ type ServerConfig struct {
 }
 
 type DbConfig struct {
-	Type     string         `yaml:"type"`
-	Postgres PostgresConfig `yaml:"postgres,omitempty"`
-	SQLite   SQLiteConfig   `yaml:"sqlite,omitempty"`
-	MySQL    MySQLConfig    `yaml:"mysql,omitempty"`
+	Type       string           `yaml:"type"`
+	Postgres   PostgresConfig   `yaml:"postgres,omitempty"`
+	SQLite     SQLiteConfig     `yaml:"sqlite,omitempty"`
+	MySQL      MySQLConfig      `yaml:"mysql,omitempty"`
+	ClickHouse ClickhouseConfig `yaml:"clickhouse,omitempty"`
 }
 
 type PostgresConfig struct {
@@ -25,6 +26,14 @@ type SQLiteConfig struct {
 }
 
 type MySQLConfig struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	DBName   string `yaml:"dbname"`
+}
+
+type ClickhouseConfig struct {
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 	Username string `yaml:"username"`
