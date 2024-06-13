@@ -4,10 +4,24 @@ serverConfig:
   - type: http
     port: 8080
 dbConfig:
-  type: postgres
-  postgres:
+  type: clickhouse
+  clickhouse:
     host: localhost
-    port: 5432
-    username: postgres
-    password: mypassword
-    dbname: index_ethereum
+    port: 9000
+    username: default
+    password: 
+    dbname: default
+indexer:
+  startBlock: 100000
+  endBlock: 100015
+  maxWorkers: 5
+  maxRetries: 3
+chain:
+  id: 0
+  name: ethereum
+  network: mainnet
+  rpcs:
+    - url: https://eth-mainnet.g.alchemy.com/v2/Sl8DtzlJUGuDcMHV4phabmDF7dFBbxx0
+      type: primary
+    - url: https://dimensional-hidden-shard.quiknode.pro/dd60f2874078f9dda8a066374c5d8a829d297506/
+      type: auxiliary

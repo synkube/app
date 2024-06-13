@@ -40,3 +40,15 @@ type ClickhouseConfig struct {
 	Password string `yaml:"password"`
 	DBName   string `yaml:"dbname"`
 }
+
+type RPC struct {
+	URL  string `yaml:"url"`
+	Type string `yaml:"type"`
+}
+
+type Chain struct {
+	ID      int    `yaml:"id"`
+	Name    string `yaml:"name"`
+	Network string `yaml:"network"`
+	RPCs    []RPC  `yaml:"rpcs"`
+}

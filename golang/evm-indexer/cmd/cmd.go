@@ -8,6 +8,7 @@ import (
 	coreData "github.com/synkube/app/core/data"
 	"github.com/synkube/app/evm-indexer/config"
 	"github.com/synkube/app/evm-indexer/data"
+	"github.com/synkube/app/evm-indexer/indexer"
 	"github.com/urfave/cli/v2"
 )
 
@@ -63,6 +64,8 @@ func runApplication(c *cli.Context) error {
 	if ds != nil {
 		ds.CheckConnection()
 	}
-	StartServers(cfg.ServerConfig)
+	go StartServers(cfg.ServerConfig)
+	log.Println("Starting the indexer")
+	indexer.StartIndexing(cfg.Chain, ds, cfg.Indexer)
 	return nil
 }
