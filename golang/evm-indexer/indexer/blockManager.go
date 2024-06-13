@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/synkube/app/core/data"
 	coreData "github.com/synkube/app/core/data"
 )
 
@@ -114,7 +113,7 @@ func (bm *BlockManager) AddMissedBlocks(blocks []int) {
 }
 
 type RPCClient struct {
-	rpcs          []data.RPC
+	rpcs          []coreData.RPC
 	currentRPCIdx int
 	maxRetries    int
 	client        *ethclient.Client
@@ -122,7 +121,7 @@ type RPCClient struct {
 }
 
 // NewRPCClient creates a new RPCClient instance
-func NewRPCClient(rpcs []data.RPC, maxRetries int) (*RPCClient, error) {
+func NewRPCClient(rpcs []coreData.RPC, maxRetries int) (*RPCClient, error) {
 	rpcClient := &RPCClient{
 		rpcs:       rpcs,
 		maxRetries: maxRetries,
