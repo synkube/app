@@ -55,6 +55,7 @@ func Start(args []string, buildInfo common.BuildInfo) error {
 }
 
 func runApplication(c *cli.Context) error {
+	// ctx, cancel := context.WithCancel(context.Background())
 	if err := config.InitConfig(c.String("config"), &cfg); err != nil {
 		return err
 	}
