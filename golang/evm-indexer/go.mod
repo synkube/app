@@ -8,7 +8,6 @@ require (
 	github.com/ava-labs/coreth v0.13.5
 	github.com/ethereum/go-ethereum v1.14.5
 	github.com/prometheus/client_golang v1.19.1
-	github.com/spf13/viper v1.19.0
 	github.com/synkube/app/core v0.0.0-00010101000000-000000000000
 	github.com/urfave/cli/v2 v2.27.2
 )
@@ -67,6 +66,7 @@ require (
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/viper v1.19.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/supranational/blst v0.3.11 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect

@@ -60,9 +60,7 @@ func runApplication(c *cli.Context) error {
 	log.Println("Running the application with arguments:", c.Args().Slice())
 
 	ds = data.Initialize(&cfg)
-	if ds != nil {
-		ds.CheckConnection()
-	}
+	// dm := data.NewDataModel(ds)
 	StartServers(cfg.ServerConfig)
 	return nil
 }

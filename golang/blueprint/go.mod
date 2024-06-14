@@ -6,7 +6,6 @@ replace github.com/synkube/app/core => ../core
 
 require (
 	github.com/prometheus/client_golang v1.19.1
-	github.com/spf13/viper v1.19.0
 	github.com/synkube/app/core v0.0.0-00010101000000-000000000000
 	github.com/urfave/cli/v2 v2.27.2
 	gorm.io/gorm v1.25.10
@@ -52,6 +51,7 @@ require (
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/viper v1.19.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20240312152122-5f08fbb34913 // indirect
 	go.opentelemetry.io/otel v1.26.0 // indirect

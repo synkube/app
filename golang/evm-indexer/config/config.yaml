@@ -5,6 +5,7 @@ serverConfig:
     port: 8080
 dbConfig:
   type: clickhouse
+  clean: false
   clickhouse:
     host: localhost
     port: 9000
@@ -16,7 +17,6 @@ indexer:
   endBlock: 1600100
   maxWorkers: 5
   maxRetries: 3
-  clean: false
 chain:
   id: 0
   name: ethereum

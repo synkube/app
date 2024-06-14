@@ -62,11 +62,7 @@ func runApplication(c *cli.Context) error {
 	log.Println("Running the application with arguments:", c.Args().Slice())
 
 	ds = data.Initialize(&cfg)
-	if ds != nil {
-		ds.CheckConnection()
-	}
 	go StartServers(cfg.ServerConfig)
-	log.Println("Starting the indexer")
 	indexer.StartIndexing(cfg.Chain, ds, cfg.Indexer)
 	return nil
 }

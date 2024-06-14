@@ -57,18 +57,13 @@ var models = []interface{}{
 }
 
 func Initialize(cfg *config.Config) *coreData.DataStore {
-	var ds *coreData.DataStore
-	if cfg.DbConfig.Type != "" {
-		ds = coreData.InitializeDBConn(cfg.DbConfig)
-		ds.CheckConnection()
-		if cfg.Indexer.Clean {
-			ds.Clean(models...)
-		}
-		ds.Migrate(models...)
-		// Populate(ds)
-	} else {
-		log.Println("No database configuration found")
+	ds := coreData.NewDataStore(cfg.DbConfig)
+	if cfg.DbConfig.Clean {
+		ds.Clean(models...)
 	}
+	ds.Migrate(models...)
+	// Populate(ds)
+
 	return ds
 }
 

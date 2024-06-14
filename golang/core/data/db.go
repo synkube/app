@@ -43,7 +43,17 @@ func (s *DataStore) CheckConnection() error {
 	}
 }
 
-func InitializeDBConn(cfg DbConfig) *DataStore {
+func NewDataStore(cfg DbConfig) *DataStore {
+	ds := InitializeDBFromConfig(cfg)
+	err := ds.CheckConnection()
+	if err != nil {
+		log.Fatalf("Failed to connect to the database: %v", err)
+	}
+
+	return ds
+}
+
+func InitializeDBFromConfig(cfg DbConfig) *DataStore {
 	var db *gorm.DB
 	var err error
 	switch cfg.Type {
