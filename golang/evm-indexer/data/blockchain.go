@@ -1,7 +1,6 @@
 package data
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -25,67 +24,104 @@ func NewBlockchainDataStore(ds *data.DataStore) *BlockchainDataStore {
 
 // SaveBlock saves a block and its transactions to the database
 func (bds *BlockchainDataStore) SaveBlock(block *Block, transactions []*Transaction) error {
+	log.Printf("Starting to save block number %d", block.Number)
 	err := bds.ds.DB().Transaction(func(db *gorm.DB) error {
-		var existingBlock Block
-		err := db.Where("number = ?", block.Number).First(&existingBlock).Error
-		if err == nil {
-			// Block already exists, skip saving
-			return nil
-		}
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
+		if exists, err := bds.blockExists(block.Number); err != nil {
+			log.Printf("Error checking existence of block number %d: %v", block.Number, err)
 			return err
+		} else if exists {
+			log.Printf("Block number %d already exists, skipping save", block.Number)
+			return nil
 		}
 
 		for _, txn := range transactions {
-			if err := db.Save(txn).Error; err != nil {
+			if err := bds.SaveTransaction(txn); err != nil {
 				return err
 			}
 		}
+
 		if err := db.Save(block).Error; err != nil {
+			log.Printf("Error saving block number %d: %v", block.Number, err)
 			return err
 		}
+		log.Printf("Block number %d saved successfully", block.Number)
 		return nil
 	})
+
+	if err != nil {
+		log.Printf("Transaction failed for block number %d: %v", block.Number, err)
+	} else {
+		log.Printf("Transaction succeeded for block number %d", block.Number)
+	}
 	return err
 }
 
 // SaveTransaction saves a transaction to the database
 func (bds *BlockchainDataStore) SaveTransaction(tx *Transaction) error {
-	var existingTx Transaction
-	err := bds.ds.DB().Where("id = ?", tx.ID).First(&existingTx).Error
-	if err == nil {
-		// Transaction already exists, skip saving
+	log.Printf("Starting to save transaction %s", tx.ID)
+	if exists, err := bds.transactionExists(tx.ID); err != nil {
+		log.Printf("Error checking existence of transaction %s: %v", tx.ID, err)
+		return err
+	} else if exists {
+		log.Printf("Transaction %s already exists, skipping save", tx.ID)
 		return nil
 	}
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
+
+	if err := bds.ds.DB().Save(tx).Error; err != nil {
+		log.Printf("Error saving transaction %s: %v", tx.ID, err)
 		return err
 	}
-	return bds.ds.DB().Save(tx).Error
+	log.Printf("Transaction %s saved successfully", tx.ID)
+	return nil
+}
+
+// blockExists checks if a block with the given number exists in the database
+func (bds *BlockchainDataStore) blockExists(number uint64) (bool, error) {
+	var count int64
+	if err := bds.ds.DB().Model(&Block{}).Where("number = ?", number).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+// transactionExists checks if a transaction with the given ID exists in the database
+func (bds *BlockchainDataStore) transactionExists(id string) (bool, error) {
+	var count int64
+	if err := bds.ds.DB().Model(&Transaction{}).Where("id = ?", id).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
 // SaveAccount saves an account to the database
 func (bds *BlockchainDataStore) SaveAccount(account *Account) error {
-	var existingAccount Account
-	err := bds.ds.DB().Where("address = ?", account.Address).First(&existingAccount).Error
-	if err == nil {
-		// Transaction already exists, skip saving
-		return nil
-	}
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
+	var count int64
+	err := bds.ds.DB().Model(&Account{}).Where("address = ?", account.Address).Count(&count).Error
+	if err != nil {
 		return err
+	}
+	if count > 0 {
+		// Account already exists, skip saving
+		return nil
 	}
 	return bds.ds.DB().Save(account).Error
 }
 
 // GetLatestSavedBlock retrieves the latest saved block number from the database
 func (bds *BlockchainDataStore) GetLatestSavedBlock() (uint64, error) {
-	var block Block
-	if err := bds.ds.DB().Order("number desc").First(&block).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return 0, nil // No blocks found, return 0
-		}
+	var count int64
+	if err := bds.ds.DB().Model(&Block{}).Count(&count).Error; err != nil {
 		return 0, err
 	}
+	if count == 0 {
+		return 0, nil // No blocks found
+	}
+
+	var block Block
+	if err := bds.ds.DB().Order("number desc").First(&block).Error; err != nil {
+		return 0, err
+	}
+
 	return block.Number, nil
 }
 

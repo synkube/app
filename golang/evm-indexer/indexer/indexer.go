@@ -172,7 +172,7 @@ func StartIndexing(chainConfig coreData.Chain, ds *coreData.DataStore, indexerCo
 	log.Printf("Starting from block %d", latestSavedBlock)
 
 	// Identify missing blocks from startBlock to latestSavedBlock
-	missedBlocks := bds.IdentifyMissingBlocks(uint64(indexerConfig.StartBlock)+1, latestSavedBlock)
+	missedBlocks := bds.IdentifyMissingBlocks(uint64(indexerConfig.StartBlock), latestSavedBlock)
 
 	// Create BlockManager with missing blocks from start to latest saved block
 	blockManager := NewBlockManager(int(latestSavedBlock), indexerConfig.EndBlock)

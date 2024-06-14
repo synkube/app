@@ -20,7 +20,13 @@ func (s *DataStore) DB() *gorm.DB {
 }
 
 func (s *DataStore) Migrate(models ...interface{}) error {
+	log.Println("Migrating the database")
 	return s.db.AutoMigrate(models...)
+}
+
+func (s *DataStore) Clean(models ...interface{}) error {
+	log.Println("Dropping the tables")
+	return s.db.Migrator().DropTable(models...)
 }
 
 func (s *DataStore) CheckConnection() error {
@@ -37,7 +43,7 @@ func (s *DataStore) CheckConnection() error {
 	}
 }
 
-func InitializeDB(cfg DbConfig) *DataStore {
+func InitializeDBConn(cfg DbConfig) *DataStore {
 	var db *gorm.DB
 	var err error
 	switch cfg.Type {
@@ -60,10 +66,10 @@ func InitializeDB(cfg DbConfig) *DataStore {
 	}
 
 	if err != nil {
-		log.Fatalf("Failed to connect to database type %s: %v", cfg.Type, err)
+		log.Fatalf("Failed to connect to database type: %s: %v", cfg.Type, err)
 	}
 
-	log.Printf("Database connection initialized to %s\n", cfg.Type)
+	log.Printf("Database connection initialized to: %s\n", cfg.Type)
 
 	return &DataStore{db: db}
 }

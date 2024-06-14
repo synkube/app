@@ -19,13 +19,14 @@ type Config struct {
 }
 
 type Indexer struct {
-	StartBlock    int `yaml:"startBlock"`
-	EndBlock      int `yaml:"endBlock"`
-	BatchSize     int `yaml:"batchSize"`
-	MaxWorkers    int `yaml:"maxWorkers"`
-	MaxRetries    int `yaml:"maxRetries"`
-	RetryInterval int `yaml:"retryInterval"`
-	RetryBackoff  int `yaml:"retryBackoff"`
+	StartBlock    int  `yaml:"startBlock"`
+	EndBlock      int  `yaml:"endBlock"`
+	BatchSize     int  `yaml:"batchSize"`
+	MaxWorkers    int  `yaml:"maxWorkers"`
+	MaxRetries    int  `yaml:"maxRetries"`
+	RetryInterval int  `yaml:"retryInterval"`
+	RetryBackoff  int  `yaml:"retryBackoff"`
+	Clean         bool `yaml:"clean"`
 }
 
 func InitConfig(cfgFile string, cfg *Config) error {

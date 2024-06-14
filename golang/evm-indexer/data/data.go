@@ -48,12 +48,22 @@ type Account struct {
 	// Transactions []Transaction `json:"transactions" gorm:"foreignKey:FromAddress;references:Address"`
 }
 
+var models = []interface{}{
+	&Account{},
+	&Block{},
+	&Transaction{},
+}
+
 func Initialize(cfg *config.Config) *coreData.DataStore {
 	var ds *coreData.DataStore
 	if cfg.DbConfig.Type != "" {
-		ds = coreData.InitializeDB(cfg.DbConfig)
+		ds = coreData.InitializeDBConn(cfg.DbConfig)
 		ds.CheckConnection()
-		Populate(ds)
+		if cfg.Indexer.Clean {
+			ds.Clean(models...)
+		}
+		ds.Migrate(models...)
+		// Populate(ds)
 	} else {
 		log.Println("No database configuration found")
 	}
@@ -61,6 +71,5 @@ func Initialize(cfg *config.Config) *coreData.DataStore {
 }
 
 func Populate(ds *coreData.DataStore) {
-	ds.Migrate(&Account{}, &Block{}, &Transaction{})
-	log.Println("Migrating the database")
+	log.Println("Populating the database with sample data")
 }

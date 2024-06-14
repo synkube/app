@@ -12,10 +12,11 @@ dbConfig:
     password: 
     dbname: default
 indexer:
-  startBlock: 100000
-  endBlock: 100015
-  maxWorkers: 5
+  startBlock: 100023
+  endBlock: 100100
+  maxWorkers: 10
   maxRetries: 3
+  clean: false
 chain:
   id: 0
   name: ethereum
