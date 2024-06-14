@@ -15,50 +15,6 @@ import (
 	coreData "github.com/synkube/app/core/data"
 )
 
-type RPCManager struct {
-	primary   coreData.RPC
-	auxiliary []coreData.RPC
-	mu        sync.Mutex
-	current   int
-}
-
-// NewRPCManager creates a new RPCManager
-func NewRPCManager(chainConfig coreData.Chain) *RPCManager {
-	var primary coreData.RPC
-	var auxiliary []coreData.RPC
-	for _, rpc := range chainConfig.RPCs {
-		if rpc.Type == "primary" {
-			primary = coreData.RPC{URL: rpc.URL, Type: rpc.Type}
-		} else {
-			auxiliary = append(auxiliary, coreData.RPC{URL: rpc.URL, Type: rpc.Type})
-		}
-	}
-	return &RPCManager{
-		primary:   primary,
-		auxiliary: auxiliary,
-	}
-}
-
-// GetRPC returns the current RPC to use
-func (rm *RPCManager) GetRPC() string {
-	rm.mu.Lock()
-	defer rm.mu.Unlock()
-	if rm.current == 0 {
-		return rm.primary.URL
-	}
-	return rm.auxiliary[rm.current-1].URL
-}
-
-// Handle429 switches to the next available RPC on a 429 error
-func (rm *RPCManager) Handle429() {
-	rm.mu.Lock()
-	defer rm.mu.Unlock()
-	rm.current++
-	if rm.current >= len(rm.auxiliary)+1 {
-		rm.current = 0
-	}
-}
-
 type BlockManager struct {
 	sync.Mutex
 	currentBlock int

@@ -15,6 +15,8 @@ type Block struct {
 	Number    uint64    `json:"number"`
 	Timestamp time.Time `json:"timestamp"`
 	// Transactions    []Transaction `json:"transactions" gorm:"foreignKey:BlockHash;references:Hash"`
+	// Transactions    []string `json:"transactions"` // Array of transaction IDs
+	NumberOfTxs     uint64 `json:"numberOfTxs"`
 	Miner           string `json:"miner"`
 	ParentHash      string `json:"parentHash"`
 	Difficulty      string `json:"difficulty"`

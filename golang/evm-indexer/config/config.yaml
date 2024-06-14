@@ -12,9 +12,9 @@ dbConfig:
     password: 
     dbname: default
 indexer:
-  startBlock: 100023
-  endBlock: 100100
-  maxWorkers: 10
+  startBlock: 1600023
+  endBlock: 1600100
+  maxWorkers: 5
   maxRetries: 3
   clean: false
 chain:
