@@ -23,7 +23,7 @@ type User struct {
 func Initialize(cfg *config.Config) *coreData.DataStore {
 	var ds *coreData.DataStore
 	if cfg.DbConfig.Type != "" {
-		ds = coreData.InitializeDB(cfg.DbConfig)
+		ds = coreData.InitializeDBConn(cfg.DbConfig)
 		ds.CheckConnection()
 		Populate(ds)
 	} else {

@@ -11,7 +11,6 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/synkube/app/core v0.0.0-00010101000000-000000000000
 	github.com/urfave/cli/v2 v2.27.2
-	gorm.io/gorm v1.25.10
 )
 
 require (
@@ -91,5 +90,6 @@ require (
 	gorm.io/driver/mysql v1.5.7 // indirect
 	gorm.io/driver/postgres v1.5.8 // indirect
 	gorm.io/driver/sqlite v1.5.6 // indirect
+	gorm.io/gorm v1.25.10 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
