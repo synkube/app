@@ -18,20 +18,20 @@ type UserModel interface {
 	GetUserByID(id int) User
 }
 
-func NewDataModel(ds *data.DataStore) DataModel {
-	return DataModel{
+func NewDataModel(ds *data.DataStore) *DataModel {
+	return &DataModel{
 		ds: ds,
 		DB: ds.DB(),
 	}
 }
 
-func (dm DataModel) GetUsers() []User {
+func (dm *DataModel) GetUsers() []User {
 	var users []User
 	dm.DB.Find(&users)
 	return users
 }
 
-func (dm DataModel) GetUserByID(id int) User {
+func (dm *DataModel) GetUserByID(id int) User {
 	var user User
 	dm.DB.First(&user, id)
 	return user

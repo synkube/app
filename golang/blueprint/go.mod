@@ -5,6 +5,8 @@ go 1.22.3
 replace github.com/synkube/app/core => ../core
 
 require (
+	github.com/graphql-go/graphql v0.8.1
+	github.com/graphql-go/handler v0.2.4
 	github.com/prometheus/client_golang v1.19.1
 	github.com/synkube/app/core v0.0.0-00010101000000-000000000000
 	github.com/urfave/cli/v2 v2.27.2

@@ -5,11 +5,13 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/graphql-go/handler"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/synkube/app/core/data"
+	"github.com/synkube/app/blueprint/data"
+	coreData "github.com/synkube/app/core/data"
 )
 
-func StartServers(servers []data.ServerConfig) {
+func StartServers(servers []coreData.ServerConfig, dm *data.DataModel) {
 	for _, server := range servers {
 		switch server.Type {
 		case "http":
@@ -17,7 +19,7 @@ func StartServers(servers []data.ServerConfig) {
 		case "grpc":
 			// Add gRPC server initialization here
 		case "graphql":
-			// Add GraphQL server initialization here
+			go startGraphQLServer(server, dm)
 		case "websocket":
 			// Add WebSocket server initialization here
 		default:
@@ -29,7 +31,7 @@ func StartServers(servers []data.ServerConfig) {
 	select {}
 }
 
-func startHTTPServer(cfg data.ServerConfig) {
+func startHTTPServer(cfg coreData.ServerConfig) {
 	addr := fmt.Sprintf("localhost:%d", cfg.Port)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, World!")
@@ -37,5 +39,19 @@ func startHTTPServer(cfg data.ServerConfig) {
 	http.Handle("/metrics", promhttp.Handler())
 
 	log.Printf("HTTP server is running on %s...\n", addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
+}
+
+func startGraphQLServer(cfg coreData.ServerConfig, dm *data.DataModel) {
+	addr := fmt.Sprintf("localhost:%d", cfg.Port)
+	h := handler.New(&handler.Config{
+		Schema:   data.NewGraphQLSchema(dm),
+		Pretty:   true,
+		GraphiQL: true, // Enable GraphiQL interface
+	})
+	http.Handle("/graphql", h)
+	// http.Handle("/metrics", promhttp.Handler())
+
+	log.Printf("GraphQL server is running on %s...\n", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }

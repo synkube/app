@@ -3,8 +3,8 @@ version: "1.0"
 serverConfig:
   - type: http
     port: 8080
-  - type: grpc
-    port: 9090
+  - type: graphql
+    port: 8081
 dbConfig:
   type: postgres
   postgres:

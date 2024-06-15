@@ -68,10 +68,16 @@ func PrettyPrintIndent(data interface{}, indentLevel int) {
 	case reflect.Struct:
 		fmt.Printf("%sStruct:\n", indent)
 		for i := 0; i < v.NumField(); i++ {
-			fieldName := v.Type().Field(i).Name
-			fieldValue := v.Field(i).Interface()
-			fmt.Printf("%s  %s: ", indent, fieldName)
-			PrettyPrintIndent(fieldValue, indentLevel+1)
+			field := v.Type().Field(i)
+			fieldValue := v.Field(i)
+
+			if field.PkgPath != "" { // unexported field
+				// fmt.Printf("%s  %v\n", indent, fieldValue)
+				continue
+			}
+
+			fmt.Printf("%s  %s: ", indent, field.Name)
+			PrettyPrintIndent(fieldValue.Interface(), indentLevel+1)
 		}
 	case reflect.Map:
 		fmt.Printf("%sMap:\n", indent)
@@ -85,6 +91,7 @@ func PrettyPrintIndent(data interface{}, indentLevel int) {
 			fmt.Printf("%s  [%d]: ", indent, i)
 			PrettyPrintIndent(v.Index(i).Interface(), indentLevel+1)
 		}
+
 	default:
 		fmt.Printf("%s%v\n", indent, v.Interface())
 	}
