@@ -25,16 +25,16 @@ func NewDataModel(ds *data.DataStore) *DataModel {
 	}
 }
 
-func (dm *DataModel) GetUsers() []User {
+func (dm *DataModel) GetUsers() ([]User, error) {
 	var users []User
-	dm.DB.Find(&users)
-	return users
+	result := dm.DB.Find(&users)
+	return users, result.Error
 }
 
-func (dm *DataModel) GetUserByID(id int) User {
+func (dm *DataModel) GetUserByID(id string) (User, error) {
 	var user User
-	dm.DB.First(&user, id)
-	return user
+	result := dm.DB.First(&user, "id = ?", id)
+	return user, result.Error
 }
 
 // User represents the User table in the database

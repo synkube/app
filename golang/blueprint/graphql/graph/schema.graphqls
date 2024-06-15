@@ -1,0 +1,14 @@
+# graph/schema.graphqls
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Query {
+  users: [User!]!
+  user(id: Int!): User
+}

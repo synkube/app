@@ -25,7 +25,7 @@ func StartHTTPServer(cfg data.ServerConfig) {
 
 func StartHTTPGinServer(cfg data.ServerConfig) {
 	addr := fmt.Sprintf("localhost:%d", cfg.Port)
-	r := ginhelper.New()
+	r := ginhelper.New([]string{ginhelper.HealthCheckRoute, ginhelper.RobotsTxtRoute})
 
 	r.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "Hello, World!")

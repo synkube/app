@@ -27,17 +27,20 @@ const (
 	RequestIDHeader = "X-Request-ID"
 )
 
+var HealthCheckRoute = HealthCheck
+var RobotsTxtRoute = RobotsTxt
+
 var bootTime = time.Now()
 
 var logger = log.Logger("gin")
 
 // New creates a new gin server with some sensible defaults.
-func New() *gin.Engine {
+func New(routes []string) *gin.Engine {
 	server := gin.New()
 	server.ContextWithFallback = true
 
 	configureMiddleware(server)
-	configureRoutes(server)
+	configureRoutes(server, routes)
 
 	return server
 }
@@ -86,14 +89,18 @@ func setRequestIDHeader(c *gin.Context) {
 }
 
 // configureRoutes sets up the routes for the Gin server.
-func configureRoutes(server *gin.Engine) {
-	server.GET(HealthCheck, func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "UP"})
-	})
-
-	server.GET(RobotsTxt, func(c *gin.Context) {
-		reader := bytes.NewReader(robots)
-		c.Header(headers.ContentType, gin.MIMEPlain)
-		http.ServeContent(c.Writer, c.Request, "robots.txt", bootTime, reader)
-	})
+func configureRoutes(server *gin.Engine, routes []string) {
+	for _, route := range routes {
+		if route == HealthCheck {
+			server.GET(HealthCheck, func(c *gin.Context) {
+				c.JSON(http.StatusOK, gin.H{"status": "UP"})
+			})
+		} else if route == RobotsTxt {
+			server.GET(RobotsTxt, func(c *gin.Context) {
+				reader := bytes.NewReader(robots)
+				c.Header(headers.ContentType, gin.MIMEPlain)
+				http.ServeContent(c.Writer, c.Request, "robots.txt", bootTime, reader)
+			})
+		}
+	}
 }
