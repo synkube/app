@@ -14,7 +14,7 @@ dbConfig:
     dbname: default
 indexer:
   startBlock: 1600023
-  endBlock: 160060
+  endBlock: 1600060
   maxWorkers: 5
   maxRetries: 3
 chain:

@@ -149,12 +149,12 @@ func StartIndexing(chainConfig coreData.Chain, bds *data.BlockchainDataStore, in
 		log.Printf("Failed to get latest saved block: %v", err)
 		return fmt.Errorf("failed to get latest saved block: %v", err)
 	}
+	log.Printf("Latest saved block: %d", latestSavedBlock)
 
 	// Ensure that the latest saved block is within the range of start and end blocks
 	if latestSavedBlock <= uint64(indexerConfig.StartBlock) {
 		latestSavedBlock = uint64(indexerConfig.StartBlock)
-	}
-	if latestSavedBlock > uint64(indexerConfig.EndBlock) {
+	} else if latestSavedBlock > uint64(indexerConfig.EndBlock) {
 		latestSavedBlock = uint64(indexerConfig.EndBlock)
 	}
 	log.Printf("Starting from block %d", latestSavedBlock)
