@@ -1,0 +1,16 @@
+appName: "evm-indexer"
+version: "1.0.0"
+serverConfig:
+  - type: http
+    port: 8080
+  - type: graphql
+    port: 8081
+dbConfig:
+  type: clickhouse
+  clean: false
+  clickhouse:
+    host: localhost
+    port: 9000
+    username: default
+    password: 
+    dbname: default

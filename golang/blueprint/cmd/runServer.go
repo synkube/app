@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/graphql-go/handler"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/synkube/app/blueprint/data"
@@ -50,7 +51,9 @@ func startGraphQLServer(cfg coreData.ServerConfig, dm *data.DataModel) {
 		GraphiQL: true, // Enable GraphiQL interface
 	})
 	http.Handle("/graphql", h)
-	// http.Handle("/metrics", promhttp.Handler())
+
+	playgroundHandler := playground.Handler("GraphQL Playground", "/graphql")
+	http.Handle("/gqi", playgroundHandler)
 
 	log.Printf("GraphQL server is running on %s...\n", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
