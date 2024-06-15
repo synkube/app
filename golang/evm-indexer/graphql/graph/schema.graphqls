@@ -1,0 +1,53 @@
+# graph/schema.graphqls
+schema {
+  query: Query
+}
+
+type Query {
+  blocks: [Block!]!
+  block(id: String!): Block
+  transactions: [Transaction!]!
+  transaction(id: String!): Transaction
+  accounts: [Account!]!
+  account(address: String!): Account
+  blocksInRange(startBlock: BigInt!, endBlock: BigInt!): [Block!]!
+  missingBlocks(startBlock: BigInt!, endBlock: BigInt!): [BigInt!]!
+}
+
+type Block {
+  id: String!
+  hash: String!
+  number: BigInt!
+  timestamp: String!
+  numberOfTxs: BigInt!
+  miner: String!
+  parentHash: String!
+  difficulty: String!
+  totalDifficulty: String!
+  size: BigInt!
+  gasUsed: BigInt!
+  gasLimit: BigInt!
+  nonce: String!
+  extraData: String!
+}
+
+type Transaction {
+  id: String!
+  blockHash: String!
+  fromAddress: String!
+  toAddress: String
+  value: String!
+  gas: BigInt!
+  gasPrice: String!
+  inputData: String!
+  nonce: BigInt!
+  transactionIndex: BigInt!
+  timestamp: String!
+}
+
+type Account {
+  address: String!
+  balance: String!
+}
+
+scalar BigInt

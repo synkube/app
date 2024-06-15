@@ -134,7 +134,7 @@ func retrieveAccountsWithBalance(rpcClient *RPCClient, accounts []goEthCommon.Ad
 }
 
 // StartIndexing initializes the process
-func StartIndexing(chainConfig coreData.Chain, ds *coreData.DataStore, indexerConfig config.Indexer) error {
+func StartIndexing(chainConfig coreData.Chain, bds *data.BlockchainDataStore, indexerConfig config.Indexer) error {
 	log.Println("## Starting indexing process...")
 	log.Println("Setup RPC client")
 	rpcClient, err := NewRPCClient(chainConfig.RPCs, indexerConfig.MaxRetries)
@@ -142,10 +142,6 @@ func StartIndexing(chainConfig coreData.Chain, ds *coreData.DataStore, indexerCo
 		log.Printf("Failed to create RPC client: %v", err)
 		return fmt.Errorf("failed to create RPC client: %v", err)
 	}
-
-	// Initialize the BlockchainDataStore
-	log.Println("Initialize BlockchainDataStore")
-	bds := data.NewBlockchainDataStore(ds)
 
 	// Get the latest saved block from the data store
 	latestSavedBlock, err := bds.GetLatestSavedBlock()

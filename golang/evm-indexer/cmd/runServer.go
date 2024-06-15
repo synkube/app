@@ -5,11 +5,18 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/synkube/app/core/data"
+	coreData "github.com/synkube/app/core/data"
+	"github.com/synkube/app/core/ginhelper"
+	"github.com/synkube/app/evm-indexer/data"
+	"github.com/synkube/app/evm-indexer/graphql/graph"
 )
 
-func StartServers(servers []data.ServerConfig) {
+func StartServers(servers []coreData.ServerConfig, bds *data.BlockchainDataStore) {
+	log.Println("Starting servers inside cmd runserver...")
 	for _, server := range servers {
 		switch server.Type {
 		case "http":
@@ -17,7 +24,7 @@ func StartServers(servers []data.ServerConfig) {
 		case "grpc":
 			// Add gRPC server initialization here
 		case "graphql":
-			// Add GraphQL server initialization here
+			go startGraphQLServer(server, bds)
 		case "websocket":
 			// Add WebSocket server initialization here
 		default:
@@ -29,13 +36,36 @@ func StartServers(servers []data.ServerConfig) {
 	select {}
 }
 
-func startHTTPServer(cfg data.ServerConfig) {
+func startHTTPServer(cfg coreData.ServerConfig) {
 	addr := fmt.Sprintf("localhost:%d", cfg.Port)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, World!")
+	r := ginhelper.New([]string{ginhelper.HealthCheckRoute, ginhelper.RobotsTxtRoute})
+
+	r.GET("/", func(c *gin.Context) {
+		c.String(http.StatusOK, "Hello, World!")
 	})
-	http.Handle("/metrics", promhttp.Handler())
+
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	log.Printf("HTTP server is running on %s...\n", addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
+	log.Fatal(r.Run(addr))
+}
+
+func startGraphQLServer(cfg coreData.ServerConfig, bds *data.BlockchainDataStore) {
+	addr := fmt.Sprintf(":%d", cfg.Port)
+	r := ginhelper.New([]string{})
+
+	// GraphQL handler
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{BDS: bds}}))
+
+	// GraphQL Playground handler
+	playgroundHandler := playground.Handler("GraphQL Playground", "/query")
+
+	// Define routes
+	r.GET("/", gin.WrapH(playgroundHandler))
+	r.GET("/graphql", gin.WrapH(playgroundHandler))
+	r.GET("/gq", gin.WrapH(playgroundHandler))
+	r.POST("/query", gin.WrapH(srv))
+
+	log.Printf("GraphQL server is running on %s...\n", addr)
+	log.Fatal(r.Run(addr))
 }

@@ -187,6 +187,60 @@ func (bds *BlockchainDataStore) IdentifyMissingBlocks(startBlock, latestSavedBlo
 	return missedBlocks
 }
 
+// GetAllBlocks retrieves all blocks from the database.
+func (bds *BlockchainDataStore) GetAllBlocks() ([]*Block, error) {
+	var blocks []*Block
+	if err := bds.ds.DB().Find(&blocks).Error; err != nil {
+		return nil, err
+	}
+	return blocks, nil
+}
+
+// GetBlockByID retrieves a block by its ID from the database.
+func (bds *BlockchainDataStore) GetBlockByID(id string) (*Block, error) {
+	var block Block
+	if err := bds.ds.DB().Where("id = ?", id).First(&block).Error; err != nil {
+		return nil, err
+	}
+	return &block, nil
+}
+
+// GetAllTransactions retrieves all transactions from the database.
+func (bds *BlockchainDataStore) GetAllTransactions() ([]*Transaction, error) {
+	var transactions []*Transaction
+	if err := bds.ds.DB().Find(&transactions).Error; err != nil {
+		return nil, err
+	}
+	return transactions, nil
+}
+
+// GetTransactionByID retrieves a transaction by its ID from the database.
+func (bds *BlockchainDataStore) GetTransactionByID(id string) (*Transaction, error) {
+	var transaction Transaction
+	if err := bds.ds.DB().Where("id = ?", id).First(&transaction).Error; err != nil {
+		return nil, err
+	}
+	return &transaction, nil
+}
+
+// GetAllAccounts retrieves all accounts from the database.
+func (bds *BlockchainDataStore) GetAllAccounts() ([]*Account, error) {
+	var accounts []*Account
+	if err := bds.ds.DB().Find(&accounts).Error; err != nil {
+		return nil, err
+	}
+	return accounts, nil
+}
+
+// GetAccountByAddress retrieves an account by its address from the database.
+func (bds *BlockchainDataStore) GetAccountByAddress(address string) (*Account, error) {
+	var account Account
+	if err := bds.ds.DB().Where("address = ?", address).First(&account).Error; err != nil {
+		return nil, err
+	}
+	return &account, nil
+}
+
 // CreateBlockData creates a Block struct from the raw block data
 func CreateBlockData(block *types.Block) *Block {
 	return &Block{

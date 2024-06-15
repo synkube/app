@@ -3,6 +3,8 @@ package cmd
 import (
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/synkube/app/core/common"
 	coreData "github.com/synkube/app/core/data"
@@ -30,6 +32,13 @@ func Start(args []string, buildInfo common.BuildInfo) error {
 				Usage: "Run the application",
 				Action: func(c *cli.Context) error {
 					return runApplication(c)
+				},
+			},
+			{
+				Name:  "server",
+				Usage: "Run the application",
+				Action: func(c *cli.Context) error {
+					return runServer(c)
 				},
 			},
 			{
@@ -62,7 +71,31 @@ func runApplication(c *cli.Context) error {
 	log.Println("Running the application with arguments:", c.Args().Slice())
 
 	ds = data.Initialize(&cfg)
-	go StartServers(cfg.ServerConfig)
-	indexer.StartIndexing(cfg.Chain, ds, cfg.Indexer)
+	bds := data.NewBlockchainDataStore(ds)
+	go StartServers(cfg.ServerConfig, bds)
+	indexer.StartIndexing(cfg.Chain, bds, cfg.Indexer)
+	return nil
+}
+
+func runServer(c *cli.Context) error {
+	log.Println("Starting the server...")
+	// ctx, cancel := context.WithCancel(context.Background())
+	if err := config.InitConfig(c.String("config"), &cfg); err != nil {
+		return err
+	}
+	log.Println("Running the application with arguments:", c.Args().Slice())
+
+	ds = data.Initialize(&cfg)
+	bds := data.NewBlockchainDataStore(ds)
+	log.Println("Starting the serversssssssss...")
+	go StartServers(cfg.ServerConfig, bds)
+
+	// Wait for an interrupt signal to gracefully shut down the server
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	sig := <-sigChan
+	log.Println("Received signal:", sig)
+
 	return nil
 }
