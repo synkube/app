@@ -74,12 +74,18 @@ func runApplication(c *cli.Context) error {
 	bds := data.NewBlockchainDataStore(ds)
 	go StartServers(cfg.ServerConfig, bds)
 	indexer.StartIndexing(cfg.Chain, bds, cfg.Indexer)
+
+	// Wait for an interrupt signal to gracefully shut down the server
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	sig := <-sigChan
+	log.Println("Received signal:", sig)
+
 	return nil
 }
 
 func runServer(c *cli.Context) error {
-	log.Println("Starting the server...")
-	// ctx, cancel := context.WithCancel(context.Background())
 	if err := config.InitConfig(c.String("config"), &cfg); err != nil {
 		return err
 	}
@@ -87,9 +93,8 @@ func runServer(c *cli.Context) error {
 
 	ds = data.Initialize(&cfg)
 	bds := data.NewBlockchainDataStore(ds)
-	log.Println("Starting the serversssssssss...")
-	go StartServers(cfg.ServerConfig, bds)
 
+	go StartServers(cfg.ServerConfig, bds)
 	// Wait for an interrupt signal to gracefully shut down the server
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)

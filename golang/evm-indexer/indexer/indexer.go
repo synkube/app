@@ -154,6 +154,9 @@ func StartIndexing(chainConfig coreData.Chain, bds *data.BlockchainDataStore, in
 	if latestSavedBlock <= uint64(indexerConfig.StartBlock) {
 		latestSavedBlock = uint64(indexerConfig.StartBlock)
 	}
+	if latestSavedBlock > uint64(indexerConfig.EndBlock) {
+		latestSavedBlock = uint64(indexerConfig.EndBlock)
+	}
 	log.Printf("Starting from block %d", latestSavedBlock)
 
 	// Identify missing blocks from startBlock to latestSavedBlock

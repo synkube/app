@@ -16,7 +16,6 @@ import (
 )
 
 func StartServers(servers []coreData.ServerConfig, bds *data.BlockchainDataStore) {
-	log.Println("Starting servers inside cmd runserver...")
 	for _, server := range servers {
 		switch server.Type {
 		case "http":
