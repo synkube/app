@@ -6,10 +6,12 @@ import (
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/gin-gonic/gin"
 	"github.com/graphql-go/handler"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/synkube/app/blueprint/data"
 	coreData "github.com/synkube/app/core/data"
+	"github.com/synkube/app/core/ginhelper"
 )
 
 func StartServers(servers []coreData.ServerConfig, dm *data.DataModel) {
@@ -34,27 +36,34 @@ func StartServers(servers []coreData.ServerConfig, dm *data.DataModel) {
 
 func startHTTPServer(cfg coreData.ServerConfig) {
 	addr := fmt.Sprintf("localhost:%d", cfg.Port)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, World!")
+	r := ginhelper.New()
+
+	r.GET("/", func(c *gin.Context) {
+		c.String(http.StatusOK, "Hello, World!")
 	})
-	http.Handle("/metrics", promhttp.Handler())
+
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	log.Printf("HTTP server is running on %s...\n", addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
+	log.Fatal(r.Run(addr))
 }
 
 func startGraphQLServer(cfg coreData.ServerConfig, dm *data.DataModel) {
 	addr := fmt.Sprintf("localhost:%d", cfg.Port)
+	r := gin.New()
+
 	h := handler.New(&handler.Config{
 		Schema:   data.NewGraphQLSchema(dm),
 		Pretty:   true,
-		GraphiQL: true, // Enable GraphiQL interface
+		GraphiQL: true,
 	})
-	http.Handle("/graphql", h)
+	r.POST("/graphql", gin.WrapH(h))
 
+	// GraphQL Playground handler
 	playgroundHandler := playground.Handler("GraphQL Playground", "/graphql")
-	http.Handle("/gqi", playgroundHandler)
+	r.GET("/graphql", gin.WrapH(playgroundHandler))
+	r.GET("/gq", gin.WrapH(playgroundHandler))
 
 	log.Printf("GraphQL server is running on %s...\n", addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
+	log.Fatal(r.Run(addr))
 }
